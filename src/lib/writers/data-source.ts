@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { UserEntity } from "./entity/User";
 import { OceanObject } from "./entity/Object";
 import { OceanReading } from "./entity/Reading";
 import { OceanObjectState } from "./entity/ObjectState";
