@@ -16,10 +16,10 @@ export class WriterSQL {
    */
   public async start(timestamp: Date) {
     if (this.reading) {
-      throw new Error("Reading is already started");
+      throw new Error("The writing session is already started");
     }
 
-    await AppDataSource.initialize();
+    await AppDataSource.initialize(); // меняем синглтон в контексте инстанса, что не очень хорошо
     const reading = new OceanReading();
     reading.timestamp = timestamp;
     await AppDataSource.manager.save(reading);
@@ -29,6 +29,10 @@ export class WriterSQL {
    * Записать исторические данные
    */
   public async write(record: HistoryRecord) {
+    if (!this.reading) {
+      throw new Error("The writing session was not started");
+    }
+
     const geometry = new OceanObjectGeometry();
     geometry.lat = record.lat;
     geometry.lon = record.lon;
