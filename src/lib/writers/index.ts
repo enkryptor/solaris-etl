@@ -8,6 +8,9 @@ import { OceanObjectPCData } from "./entity/PCData";
 import { OceanObject } from "./entity/Object";
 import { OceanObjectState } from "./entity/ObjectState";
 
+/**
+ * Записыватель данных в PostgreSQL
+ */
 export class WriterSQL {
   private reading?: OceanReading;
 
@@ -19,10 +22,11 @@ export class WriterSQL {
       throw new Error("The writing session is already started");
     }
 
-    await AppDataSource.initialize(); // меняем синглтон в контексте инстанса, что не очень хорошо
+    await AppDataSource.initialize(); // меняем состояние синглтона в контексте инстанса, что не очень хорошо
     const reading = new OceanReading();
     reading.timestamp = timestamp;
     await AppDataSource.manager.save(reading);
+    this.reading = reading;
   }
 
   /**

@@ -4,6 +4,7 @@ import * as path from "path";
 import { ReaderCSV } from "../lib/readers";
 import { WriterSQL } from "../lib/writers";
 
+
 /**
  * Обработать параметры команды импорта.
  * В текущей версии команда ожидает только имя файла.

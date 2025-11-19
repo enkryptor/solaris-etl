@@ -1,12 +1,12 @@
-const VERSION = '1.0.0';
-const NAME = 'cli-tool';
+const VERSION = '1.1.0';
+const NAME = 'solaris-etl';
 
 /**
- * Show help information for the CLI
+ * Показать справку по использованию
  */
 export default function showHelp(): void {
   console.log(`
-Untitled CLI tool v${VERSION}
+Solaris ETC tool v${VERSION}
 
 Usage: ${NAME} [command] [options]
 

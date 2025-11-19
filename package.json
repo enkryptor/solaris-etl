@@ -1,7 +1,7 @@
 {
    "name": "typeorm-example",
-   "version": "0.0.1",
-   "description": "Awesome project developed with TypeORM.",
+   "version": "1.1.0",
+   "description": "",
    "type": "commonjs",
    "devDependencies": {
       "@types/node": "^22.13.10",
@@ -16,7 +16,7 @@
       "typeorm": "0.3.27"
    },
    "scripts": {
-      "start": "ts-node src/index.ts",
+      "start": "node --env-file=.env -r ts-node/register src/index.ts",
       "typeorm": "typeorm-ts-node-commonjs"
    }
 }

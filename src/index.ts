@@ -2,6 +2,7 @@
 
 import { run } from "./cli";
 
+
 /**
  * Main entry point
  */
