@@ -9,8 +9,8 @@
       "typescript": "^5.8.2"
    },
    "dependencies": {
-      "@fast-csv/parse": "^5.0.5",
       "@node-rs/xxhash": "^1.7.6",
+      "csv-parse": "^6.1.0",
       "pg": "^8.14.1",
       "reflect-metadata": "^0.2.2",
       "typeorm": "0.3.27"

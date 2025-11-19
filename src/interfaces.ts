@@ -1,4 +1,4 @@
-export type HistoryRow = {
+export type HistoryRecord = {
   code: string;
   lat: number;
   lon: number;
