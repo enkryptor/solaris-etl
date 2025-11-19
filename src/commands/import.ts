@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "@fast-csv/parse";
+import { xxh32 } from "@node-rs/xxhash";
 
 import { HistoryRow } from "../interfaces";
-
 import { AppDataSource } from "../data-source";
 import { OceanObjectState } from "../entity/ObjectState";
 import { OceanReading } from "../entity/Reading";
@@ -98,14 +98,23 @@ async function saveBatch(
     geometry.radius = 0;
     await AppDataSource.manager.save(geometry);
 
-    const data = new OceanObjectPCData();
-    data.data = Buffer.from(row.data, "base64");
-    await AppDataSource.manager.save(data);
+    const rowData = Buffer.from(row.data, "base64");
+    const rowHash = xxh32(rowData);
 
-    const hash = new OceanObjectPCDataHash();
-    hash.hash = BigInt(Math.trunc(Math.random() * 100000000));
-    hash.data = data;
-    await AppDataSource.manager.save(hash);
+    let hash = await AppDataSource.manager.findOne(OceanObjectPCDataHash, {
+      where: { hash: rowHash },
+    });
+
+    if (!hash) {
+      const data = new OceanObjectPCData();
+      data.data = rowData;
+      await AppDataSource.manager.save(data);
+
+      hash = new OceanObjectPCDataHash();
+      hash.hash = rowHash;
+      hash.data = data;
+      await AppDataSource.manager.save(hash);
+    }
 
     let obj = await AppDataSource.manager.findOne(OceanObject, {
       where: { code: row.code },
@@ -113,7 +122,7 @@ async function saveBatch(
     if (!obj) {
       obj = new OceanObject();
       obj.code = row.code;
-      await AppDataSource.manager.save(obj)
+      await AppDataSource.manager.save(obj);
     }
 
     const state = new OceanObjectState();
@@ -124,9 +133,4 @@ async function saveBatch(
     await AppDataSource.manager.save(state);
     console.log(`Loaded ${state.object.code} as ${state.id}`);
   }
-
-  // const savedEntities = await AppDataSource.manager.save(entities);
-  // for (const entity of savedEntities) {
-  //   console.log(`Loaded ${entity.object.code} as ${entity.id}`);
-  // }
 }

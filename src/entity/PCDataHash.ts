@@ -11,7 +11,7 @@ export class OceanObjectPCDataHash {
 
     @Column({ type: "bigint" })
     @Index({ unique: true })
-    hash: BigInt;
+    hash: number;
 
     @OneToOne(type => OceanObjectPCData)
     @JoinColumn({ name: "data_id" })
