@@ -5,7 +5,12 @@ import { parse } from "@fast-csv/parse";
 import { HistoryRow } from "../interfaces";
 
 import { AppDataSource } from "../data-source";
-import { OceanObjectState } from "../entity/Object";
+import { OceanObjectState } from "../entity/ObjectState";
+import { OceanReading } from "../entity/Reading";
+import { OceanObjectGeometry } from "../entity/Geometry";
+import { OceanObjectPCDataHash } from "../entity/PCDataHash";
+import { OceanObjectPCData } from "../entity/PCData";
+import { OceanObject } from "../entity/Object";
 
 const BATCH_SIZE = 10;
 
@@ -22,13 +27,20 @@ function parseParams(params: string[]): { filename: string } {
  */
 export default async function importCSV(params: string[]): Promise<void> {
   const { filename } = parseParams(params);
+  const filepath = path.resolve(filename);
+  const timestamp = fs.statSync(filepath).atime;
+
   await AppDataSource.initialize();
+
+  const reading = new OceanReading();
+  reading.timestamp = timestamp;
+  await AppDataSource.manager.save(reading);
 
   let hasData = true;
   let skip = 0;
   while (hasData) {
-    const batch = await readBatch(path.resolve(filename), BATCH_SIZE, skip);
-    await saveBatch(batch);
+    const batch = await readBatch(filepath, BATCH_SIZE, skip);
+    await saveBatch(batch, reading);
     hasData = batch.length === BATCH_SIZE;
     skip += BATCH_SIZE;
   }
@@ -38,11 +50,11 @@ export default async function importCSV(params: string[]): Promise<void> {
 
 function parseRow(row: Record<string, string>): HistoryRow {
   const history: HistoryRow = {
-    code: row['code'],
-    lat: Number.parseFloat(row['lat']),
-    lon: Number.parseFloat(row['lon']),
-    radius: Number.parseFloat(row['radius']),
-    data: row['data'],
+    code: row["code"],
+    lat: Number.parseFloat(row["lat"]),
+    lon: Number.parseFloat(row["lon"]),
+    radius: Number.parseFloat(row["radius"]),
+    data: row["data"],
   };
   console.log(`Extracted ${history.code}`);
   return history;
@@ -75,15 +87,46 @@ function readBatch(
   });
 }
 
-async function saveBatch(history: HistoryRow[]) {
-  const entities = history.map((user) => {
+async function saveBatch(
+  history: HistoryRow[],
+  reading: OceanReading
+): Promise<void> {
+  for (const row of history) {
+    const geometry = new OceanObjectGeometry();
+    geometry.lat = 0;
+    geometry.lon = 0;
+    geometry.radius = 0;
+    await AppDataSource.manager.save(geometry);
+
+    const data = new OceanObjectPCData();
+    data.data = Buffer.from(row.data, "base64");
+    await AppDataSource.manager.save(data);
+
+    const hash = new OceanObjectPCDataHash();
+    hash.hash = BigInt(Math.trunc(Math.random() * 100000000));
+    hash.data = data;
+    await AppDataSource.manager.save(hash);
+
+    let obj = await AppDataSource.manager.findOne(OceanObject, {
+      where: { code: row.code },
+    });
+    if (!obj) {
+      obj = new OceanObject();
+      obj.code = row.code;
+      await AppDataSource.manager.save(obj)
+    }
+
     const state = new OceanObjectState();
-    return state;
-  });
-  const savedEntities = await AppDataSource.manager.save(entities);
-  for (const entity of savedEntities) {
-    console.log(
-      `Loaded ${entity.object.code} as ${entity.id}`
-    );
+    state.reading = reading;
+    state.object = obj;
+    state.geometry = geometry;
+    state.hash = hash;
+    await AppDataSource.manager.save(state);
+    console.log(`Loaded ${state.object.code} as ${state.id}`);
   }
+
+  // const savedEntities = await AppDataSource.manager.save(entities);
+  // for (const entity of savedEntities) {
+  //   console.log(`Loaded ${entity.object.code} as ${entity.id}`);
+  // }
 }
