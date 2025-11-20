@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne, Index, JoinColumn } from "ty
 import { OceanReading } from "./Reading";
 import { OceanObject } from "./Object";
 import { OceanObjectGeometry } from "./Geometry";
-import { OceanObjectPCDataHash } from "./PCDataHash";
+import { OceanObjectPCData } from "./PCData";
 
 /**
  * Состояние объекта на момент замера
@@ -25,7 +25,7 @@ export class OceanObjectState {
     @JoinColumn({ name: "geometry_id" })
     geometry: OceanObjectGeometry;
 
-    @ManyToOne(type => OceanObjectPCDataHash)
-    @JoinColumn({ name: "pcdata_hash_id" })
-    hash: OceanObjectPCDataHash;
+    @ManyToOne(type => OceanObjectPCData)
+    @JoinColumn({ name: "pcdata_id" })
+    data: OceanObjectPCData;
 }

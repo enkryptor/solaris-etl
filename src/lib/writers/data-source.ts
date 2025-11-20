@@ -5,10 +5,9 @@ import { OceanReading } from "./entity/Reading";
 import { OceanObjectState } from "./entity/ObjectState";
 import { OceanObjectGeometry } from "./entity/Geometry";
 import { OceanObjectPCData } from "./entity/PCData";
-import { OceanObjectPCDataHash } from "./entity/PCDataHash";
 
 
-export const AppDataSource = new DataSource({
+export const dataSourceFactory = () => new DataSource({
   type: "postgres",
   host: process.env.DB_HOST,
   port: Number.parseInt(process.env.DB_PORT) || 5432,
@@ -23,7 +22,6 @@ export const AppDataSource = new DataSource({
     OceanObjectState,
     OceanObjectGeometry,
     OceanObjectPCData,
-    OceanObjectPCDataHash,
   ],
   migrations: [],
   subscribers: [],

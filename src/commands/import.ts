@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { ReaderCSV } from "../lib/readers";
-import { WriterSQL } from "../lib/writers";
+import { readCSV } from "../lib/readers";
+import { HistoryRecord, Writer } from "../interfaces";
 
 
 /**
@@ -20,19 +20,20 @@ function parseParams(params: string[]): { filename: string } {
 /**
  * Загрузить данные из CSV-файла
  */
-export default async function importCSV(params: string[]): Promise<void> {
+export default async function importCSV(params: string[], writer: Writer<Date, HistoryRecord>): Promise<void> {
   const { filename } = parseParams(params);
   const filepath = path.resolve(filename);
   const timestamp = fs.statSync(filepath).atime;
-  const reader = new ReaderCSV(filepath);
-  const writer = new WriterSQL();
 
+  const startTime = process.hrtime();
   await writer.start(timestamp);
   let count = 0;
-  for await (const record of reader.read()) {
+  for await (const record of readCSV(filepath)) {
     await writer.write(record);
     count++;
   }
   writer.end();
-  console.log(`Successfully imported ${count} entites`);
+
+  const elapsed = process.hrtime(startTime)[1] / 1000000;
+  console.log(`Successfully imported ${count} entites for ${elapsed.toFixed(2)} ms`);
 }

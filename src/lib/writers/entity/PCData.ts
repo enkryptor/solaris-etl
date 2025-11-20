@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm"
 
 /**
  * Данные физико-химических замеров
@@ -7,6 +7,10 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 export class OceanObjectPCData {
     @PrimaryGeneratedColumn()
     id: number;
+
+    @Column({ type: "bigint" })
+    @Index({ unique: true })
+    hash: number;
 
     @Column({ type: "bytea" })
     data: Buffer;
