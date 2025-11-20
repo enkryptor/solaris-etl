@@ -1,15 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm"
+import { Entity, Column, PrimaryColumn } from "typeorm"
 
 /**
  * Данные физико-химических замеров
  */
 @Entity({ name: "pcdata" })
 export class OceanObjectPCData {
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Column({ type: "bigint" })
-    @Index({ unique: true })
+    @PrimaryColumn({ type: "bigint" })
     hash: number;
 
     @Column({ type: "bytea" })

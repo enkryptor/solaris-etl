@@ -6,20 +6,15 @@ import { OceanReading } from "./entity/Reading";
 import { OceanObjectPCData } from "./entity/PCData";
 import { OceanObject } from "./entity/Object";
 import { OceanObjectState } from "./entity/ObjectState";
+import { BaseWriter } from "./base-writer";
 
 /**
  * "Инкрементальный" записыватель исторических данных в PostgreSQL.
  * 
  * Вычитывает предыдущее состояние и создаёт новые данные только если они изменились.
  */
-export class IncrementalWriter implements Writer<Date, HistoryRecord> {
-    start(initialData: Date): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
+export class IncrementalWriter extends BaseWriter {
     write(record: HistoryRecord): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    end(): Promise<void> {
         throw new Error("Method not implemented.");
     }
 }

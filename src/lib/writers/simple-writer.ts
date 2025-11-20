@@ -7,9 +7,8 @@ import { BaseWriter } from "./base-writer";
 
 /**
  * "Наивный" записыватель исторических данных в PostgreSQL.
- * 
+ *
  * Пишет сущности по одной, создавая зависимости отдельными запросами.
- * Перед записью блоба данных ищет уже существующий с тем же хэшем.
  */
 export class SimpleWriter extends BaseWriter {
   /**
@@ -24,36 +23,37 @@ export class SimpleWriter extends BaseWriter {
     geometry.lat = record.lat;
     geometry.lon = record.lon;
     geometry.radius = record.radius;
-    await this.dataSource.manager.save(geometry);
+    geometry.hash = this.getBufferHash(
+      Buffer.from([record.lat, record.lon, record.radius])
+    );
+    await this.dataSource.manager.upsert(OceanObjectGeometry, geometry, [
+      "hash",
+    ]);
 
     const rowData = Buffer.from(record.data, "base64");
     const rowHash = this.getBufferHash(rowData);
-
+    // для ускорения обработки дублей явно ищем запись по хэшу
     let data = await this.dataSource.manager.findOne(OceanObjectPCData, {
-      where: { hash: rowHash },
+      where: {
+        hash: rowHash,
+      },
     });
-
     if (!data) {
-      const data = new OceanObjectPCData();
+      data = new OceanObjectPCData();
       data.data = rowData;
       data.hash = rowHash;
-      await this.dataSource.manager.save(data);
+      await this.dataSource.manager.upsert(OceanObjectPCData, data, ["hash"]);
     }
 
-    let obj = await this.dataSource.manager.findOne(OceanObject, {
-      where: { code: record.code },
-    });
-    if (!obj) {
-      obj = new OceanObject();
-      obj.code = record.code;
-      await this.dataSource.manager.save(obj);
-    }
+    const obj = new OceanObject();
+    obj.code = record.code;
+    await this.dataSource.manager.upsert(OceanObject, obj, ["code"]);
 
     const state = new OceanObjectState();
     state.reading = this.reading;
     state.object = obj;
     state.geometry = geometry;
     state.data = data;
-    await this.dataSource.manager.save(state);
+    await this.dataSource.manager.insert(OceanObjectState, state);
   }
 }
