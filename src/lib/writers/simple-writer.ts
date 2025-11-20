@@ -1,36 +1,17 @@
-import { xxh32 } from "@node-rs/xxhash";
-import { HistoryRecord, Writer } from "../../interfaces";
-import { dataSourceFactory } from "./data-source";
+import { HistoryRecord } from "../../interfaces";
 import { OceanObjectGeometry } from "./entity/Geometry";
-import { OceanReading } from "./entity/Reading";
 import { OceanObjectPCData } from "./entity/PCData";
 import { OceanObject } from "./entity/Object";
 import { OceanObjectState } from "./entity/ObjectState";
+import { BaseWriter } from "./base-writer";
 
 /**
  * "Наивный" записыватель исторических данных в PostgreSQL.
  * 
  * Пишет сущности по одной, создавая зависимости отдельными запросами.
+ * Перед записью блоба данных ищет уже существующий с тем же хэшем.
  */
-export class SimpleWriter implements Writer<Date, HistoryRecord> {
-  private reading?: OceanReading;
-  private dataSource = dataSourceFactory();
-
-  /**
-   * Начать сессию записи исторических данных
-   */
-  public async start(timestamp: Date): Promise<void> {
-    if (this.reading) {
-      throw new Error("The writing session is already started");
-    }
-
-    await this.dataSource.initialize();
-    const reading = new OceanReading();
-    reading.timestamp = timestamp;
-    await this.dataSource.manager.save(reading);
-    this.reading = reading;
-  }
-
+export class SimpleWriter extends BaseWriter {
   /**
    * Записать исторические данные
    */
@@ -46,7 +27,7 @@ export class SimpleWriter implements Writer<Date, HistoryRecord> {
     await this.dataSource.manager.save(geometry);
 
     const rowData = Buffer.from(record.data, "base64");
-    const rowHash = xxh32(rowData);
+    const rowHash = this.getBufferHash(rowData);
 
     let data = await this.dataSource.manager.findOne(OceanObjectPCData, {
       where: { hash: rowHash },
@@ -74,13 +55,5 @@ export class SimpleWriter implements Writer<Date, HistoryRecord> {
     state.geometry = geometry;
     state.data = data;
     await this.dataSource.manager.save(state);
-  }
-
-  /**
-   * Закончить сессию записи исторических данных
-   */
-  public async end(): Promise<void>  {
-    await this.dataSource.destroy();
-    this.reading = void 0;
   }
 }
